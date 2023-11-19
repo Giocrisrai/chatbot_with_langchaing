@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock, patch
 from langchain.schema.document import Document
 from api.app.services.pdf_processing import process_pdf
-from typing import List, Tuple
+from typing import List
 
 
 @patch('api.app.services.pdf_processing.PyMuPDFLoader')
@@ -24,13 +24,10 @@ def test_process_pdf_success(mock_loader: Mock) -> None:
     mock_loader.return_value.load.return_value = mock_docs
 
     # Execute the function with a simulated file path
-    documents: List[Document]
-    file_path: str
-    documents, file_path = process_pdf("fake_path.pdf")
+    documents = process_pdf("fake_path.pdf")
 
     # Perform assertions
     assert len(documents) == 2
-    assert file_path == "fake_path.pdf"
     assert documents[0].page_content == "Test Content 1"
     assert documents[1].page_content == "Test Content 2"
     assert documents[0].metadata["page"] == 1
