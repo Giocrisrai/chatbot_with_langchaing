@@ -2,7 +2,12 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from typing import List, Dict, Union
 import logging
 from app.services.pdf_processing import process_pdf
-from app.services.chroma_service import store_in_chroma
+from app.services.docx_processing import process_docx
+from app.services.pptx_processing import process_pptx
+from app.services.xlsx_processing import process_xlsx
+from app.services.csv_processing import process_csv
+from app.services.file_postprocessing import split_data, create_embeddings_openai, create_embeddings_open_source
+from app.services.chroma_service import get_chroma_db
 
 router = APIRouter()
 
@@ -10,13 +15,13 @@ router = APIRouter()
 @router.post("/multipleupload/")
 async def multiple_upload_route(files: List[UploadFile] = File(...)) -> Dict[str, Union[str, bool]]:
     """
-    Procesa y almacena múltiples archivos subidos, almacenando sus representaciones vectoriales en Chroma.
+    Process and store multiple uploaded files, storing their vector representations in Chroma.
 
     Args:
-    - files (List[UploadFile]): Lista de archivos a ser subidos.
+    - files (List[UploadFile]): List of files to be uploaded.
 
     Returns:
-    - Dict[str, Union[str, bool]]: Un diccionario con los resultados del procesamiento y almacenamiento de cada archivo.
+    - Dict[str, Union[str, bool]]: A dictionary with the results of processing and storing each file.
     """
     results = []
     for file in files:
@@ -31,15 +36,29 @@ async def multiple_upload_route(files: List[UploadFile] = File(...)) -> Dict[str
             continue
 
         try:
-            # Procesamiento de archivos según su tipo
+            # Process files based on their type
             if file_extension == "pdf":
                 data = process_pdf(file_content, unique_filename)
             elif file_extension == "docx":
                 data = process_docx(file_content, unique_filename)
-            # Agregar condiciones para otros tipos de archivo...
+            elif file_extension == "pptx":
+                data = process_pptx(file_content, unique_filename)
+            elif file_extension == "xlsx":
+                data = process_xlsx(file_content, unique_filename)
+            elif file_extension == "csv":
+                data = process_csv(file_content, unique_filename)
 
-            # Almacenamiento en Chroma
-            store_result = await store_in_chroma(data, unique_filename)
+            # Split the data into smaller chunks
+            documents = split_data(data)
+
+            # Create embeddings
+            model_name = "all-MiniLM-L6-v2"
+            embeddings = create_embeddings_open_source(model_name=model_name)
+
+            # Store in Chroma
+            vectorstore_chroma = get_chroma_db(
+                embeddings, documents, "chroma_docs", recreate_chroma_db=False)
+
             results.append({"filename": unique_filename, "status": "Success",
                            "message": "File processed and stored in Chroma"})
         except Exception as e:
