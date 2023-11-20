@@ -16,7 +16,7 @@ app = FastAPI(
 )
 
 # CORS middleware settings
-origins = ["*"]  # Consider restricting this in a production environment
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,5 +35,5 @@ def read_root() -> RedirectResponse:
 # Including the routers without JWT authentication
 app.include_router(
     file_upload_router,
-    tags=["Protected"]
+    tags=["documents"]
 )
