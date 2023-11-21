@@ -54,8 +54,8 @@ async def multiple_upload_route(files: List[UploadFile] = File(...)) -> Dict[str
             documents = split_data(data)
             model_name = "all-MiniLM-L6-v2"
             embeddings = create_embeddings_open_source(model_name=model_name)
-            vectorstore_chroma = get_chroma_db(
-                embeddings, documents, "chroma_docs", recreate_chroma_db=False)
+            get_chroma_db(embeddings, documents, "chroma_docs",
+                          recreate_chroma_db=False)
 
             results.append({"filename": unique_filename, "status": True,
                             "message": "File processed and stored successfully"})
