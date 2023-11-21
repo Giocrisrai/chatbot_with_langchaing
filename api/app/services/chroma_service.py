@@ -17,14 +17,16 @@ def get_chroma_db(embeddings, documents, path, recreate_chroma_db=False):
     - Chroma: The Chroma vector store.
     """
     try:
-        if recreate_chroma_db:
-            logging.info("RECREATING CHROMA DB")
-            return Chroma.from_documents(
+        if recreate_chroma_db or not os.path.exists(path):
+            logging.info("CREATING/RECREATING CHROMA DB")
+            chroma = Chroma.from_documents(
                 documents=documents, embedding=embeddings, persist_directory=path
             )
         else:
             logging.info("LOADING EXISTING CHROMA")
-            return Chroma(persist_directory=path, embedding_function=embeddings)
+            chroma = Chroma(persist_directory=path,
+                            embedding_function=embeddings)
+        return chroma
     except Exception as e:
         logging.error(f"Error in get_chroma_db: {e}")
         raise e
